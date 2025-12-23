@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
 <dict>
+	<!-- App Sandbox -->
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	
+	<!-- Network access for Ollama -->
 	<key>com.apple.security.network.client</key>
 	<true/>
+	
+	<!-- Allow localhost connections -->
 	<key>com.apple.security.network.allow-localhost</key>
 	<true/>
+	
+	<!-- File access for clipboard operations -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 </dict>
