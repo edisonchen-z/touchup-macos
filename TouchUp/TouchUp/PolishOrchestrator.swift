@@ -36,8 +36,8 @@ class PolishOrchestrator {
     // MARK: - Public Methods
     
     /// Execute the text polishing workflow
-    func polishSelectedText() async {
-        let startTime = Date()
+    func polishSelectedText(startTime: Date? = nil) async {
+        let workflowStartTime = Date()
         appLogger.notice("Starting polish workflow")
         
         // Save clipboard before we start (in case we use clipboard for reading/replacing)
@@ -70,8 +70,13 @@ class PolishOrchestrator {
             // Step 6: Update menu bar icon to "success" state
             appDelegate?.setMenuBarIconSuccess()
             
-            let duration = Date().timeIntervalSince(startTime) * 1000
+            let duration = Date().timeIntervalSince(workflowStartTime) * 1000
             appLogger.notice("Polish workflow completed in \(String(format: "%.0f", duration))ms")
+            
+            if let startTime = startTime {
+                let turnaroundTime = Date().timeIntervalSince(startTime) * 1000
+                appLogger.notice("Turnaround Time: \(String(format: "%.0f", turnaroundTime))ms")
+            }
             
         } catch let error as OllamaError {
             // Restore clipboard even on error

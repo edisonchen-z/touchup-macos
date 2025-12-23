@@ -75,8 +75,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyManager = HotkeyManager()
         
         // Attempt to register hotkey
-        let success = hotkeyManager?.register { [weak self] in
-            self?.handleHotkeyPressed()
+        let success = hotkeyManager?.register { [weak self] startTime in
+            self?.handleHotkeyPressed(startTime: startTime)
         }
         
         if success == true {
@@ -88,12 +88,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    private func handleHotkeyPressed() {
+    private func handleHotkeyPressed(startTime: Date) {
         appLogger.notice("Hotkey pressed - polish workflow triggered")
         
         // Execute polish workflow asynchronously
         Task {
-            await polishOrchestrator?.polishSelectedText()
+            await polishOrchestrator?.polishSelectedText(startTime: startTime)
         }
     }
     

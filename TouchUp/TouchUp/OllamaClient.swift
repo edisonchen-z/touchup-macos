@@ -74,7 +74,10 @@ class OllamaClient {
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         
         // Make the request
+        let networkStartTime = Date()
         let (data, response) = try await session.data(for: request)
+        let networkDuration = Date().timeIntervalSince(networkStartTime) * 1000
+        appLogger.info("Ollama Latency: \(String(format: "%.0f", networkDuration))ms")
         
         // Check response
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -87,8 +90,8 @@ class OllamaClient {
             // Success - parse response
             let polishedText = try parseResponse(data)
             
-            let duration = Date().timeIntervalSince(startTime) * 1000
-            appLogger.info("Received polished text (\(polishedText.count) chars, \(String(format: "%.0f", duration))ms)")
+            let totalDuration = Date().timeIntervalSince(startTime) * 1000
+            appLogger.info("Received polished text (\(polishedText.count) chars, total: \(String(format: "%.0f", totalDuration))ms)")
             
             return polishedText
             

@@ -15,7 +15,7 @@ class HotkeyManager {
     
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var hotkeyAction: (() -> Void)?
+    private var hotkeyAction: ((Date) -> Void)?
     
     // Default hotkey: Cmd+Option+T
     private let targetKeyCode: CGKeyCode = 17 // 'T' key
@@ -36,7 +36,7 @@ class HotkeyManager {
     /// Register the global hotkey with a callback action
     /// - Parameter action: Closure to execute when hotkey is pressed
     /// - Returns: True if registration succeeded, false otherwise
-    func register(action: @escaping () -> Void) -> Bool {
+    func register(action: @escaping (Date) -> Void) -> Bool {
         // Check for accessibility permission first
         guard checkAccessibilityPermission() else {
             appLogger.warning("Cannot register hotkey - Accessibility permission denied")
@@ -151,11 +151,12 @@ class HotkeyManager {
         
         if hasCommand && hasOption && isTargetKey && !flags.contains(.maskControl) && !flags.contains(.maskShift) {
             // Hotkey detected!
+            let now = Date()
             appLogger.notice("Hotkey triggered - Cmd+Option+T pressed")
             
             // Execute the action on the main thread
             DispatchQueue.main.async { [weak self] in
-                self?.hotkeyAction?()
+                self?.hotkeyAction?(now)
             }
             
             // Consume the event to prevent it from reaching other apps
