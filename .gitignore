@@ -89,3 +89,6 @@ playground.xcworkspace
 .swiftpm/config/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
+
+## Project specific
+experiments/
