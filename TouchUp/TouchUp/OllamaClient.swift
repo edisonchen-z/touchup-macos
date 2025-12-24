@@ -24,7 +24,7 @@ class OllamaClient {
     // MARK: - Configuration
     
     private let baseURL = "http://127.0.0.1:11434"
-    private let model = "qwen3:4b" // Hardcoded for v1
+    private let model = "llama3.2:3b" // Hardcoded for v1
     private let timeout: TimeInterval = 30.0
     
     private let session: URLSession
