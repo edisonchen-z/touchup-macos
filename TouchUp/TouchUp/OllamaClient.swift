@@ -24,8 +24,14 @@ class OllamaClient {
     // MARK: - Configuration
     
     private let baseURL = "http://127.0.0.1:11434"
-    private let model = "llama3.2:3b" // Hardcoded for v1
+    private let model = "gemma2:9b" // Hardcoded for v1
     private let timeout: TimeInterval = 30.0
+    
+    // Generation parameters
+    private let temperature: Double = 0.1
+    private let topP: Double = 0.85
+    private let topK: Int = 20
+    private let repeatPenalty: Double = 1.1
     
     private let session: URLSession
     
@@ -68,7 +74,13 @@ class OllamaClient {
             "messages": [
                 ["role": "user", "content": prompt]
             ],
-            "stream": false // Non-streaming for v1
+            "stream": false, // Non-streaming for v1
+            "options": [
+                "temperature": temperature,
+                "top_p": topP,
+                "top_k": topK,
+                "repeat_penalty": repeatPenalty
+            ]
         ]
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
@@ -132,13 +144,43 @@ class OllamaClient {
     /// Build the polishing prompt
     private func buildPolishPrompt(_ input: String) -> String {
         return """
-        You are a professional writing assistant. Polish the following text by:
-        1. Correcting any grammar, spelling, or punctuation errors
-        2. Rewriting it in a professional business tone
-        3. Maintaining the original meaning and structure
-        
-        Return ONLY the polished text without any explanations, quotes, or meta-commentary.
-        
+        You are a text editor.
+
+        Polish the text for clarity and correctness in a light-touch way, like a human quickly editing their own writing.
+
+        Rules:
+        - Fix grammar, spelling, and punctuation errors.
+        - Improve clarity with minimal rewrites (small phrase-level edits).
+        - Preserve the original meaning, tone, stance, and level of certainty.
+        - Do NOT make the text more formal or more professional.
+        - Do NOT add new ideas, explanations, or reasons.
+        - Do NOT introduce obligation words (should, need, must, require).
+        - Prefer original wording unless it is incorrect or unclear.
+        - Do NOT introduce hyphens, dashes, or semicolons (including "-", "—", or ";").
+        - This rule applies only to new punctuation. Preserve any hyphens or semicolons that already exist in the original text unless they are incorrect.
+        - If you would normally use "-" or ";" to connect clauses, use a period instead.
+
+        Examples (punctuation style only):
+
+        Bad (do NOT introduce):
+        "This is a little unclear - I might be missing something."
+        Good:
+        "This is a little unclear. I might be missing something."
+
+        Bad (do NOT introduce):
+        "Sorry for the delay; I've been busy most of the day."
+        Good:
+        "Sorry for the delay. I've been busy most of the day."
+
+        Make changes when:
+        - There is a clear grammar/spelling/punctuation error, OR
+        - A phrase is awkward enough that it could be misread, OR
+        - A sentence is ambiguous and can be clarified without changing stance.
+
+        Otherwise, return the original text unchanged.
+
+        Output ONLY the revised text. No preface or labels.
+
         Text to polish:
         \(input)
         """
