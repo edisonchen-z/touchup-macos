@@ -24,17 +24,25 @@ class TextReplacer {
     /// - Parameter text: Text to paste over selection
     func replaceSelection(with text: String) async throws {
         appLogger.info("Replacing selection with polished text (\(text.count) chars)")
+        let startTime = Date()
         
         // Set clipboard to polished text
+        let clipboardStartTime = Date()
         clipboardManager.setClipboard(text)
+        let clipboardDuration = Date().timeIntervalSince(clipboardStartTime) * 1000
+        appLogger.debug("  ⏱️ Set clipboard: \(String(format: "%.1f", clipboardDuration))ms")
         
         // Simulate Cmd+V to paste
+        let pasteStartTime = Date()
         await simulatePasteCommand()
         
         // Wait for paste to complete
-        try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
+        try? await Task.sleep(nanoseconds: TouchUpConfig.nanoseconds(TouchUpConfig.pasteCompletionDelay))
+        let pasteDuration = Date().timeIntervalSince(pasteStartTime) * 1000
+        appLogger.debug("  ⏱️ Paste operation: \(String(format: "%.1f", pasteDuration))ms")
         
-        appLogger.info("Selection replaced successfully")
+        let totalDuration = Date().timeIntervalSince(startTime) * 1000
+        appLogger.info("Selection replaced successfully (total: \(String(format: "%.1f", totalDuration))ms)")
     }
     
     // MARK: - Private Methods

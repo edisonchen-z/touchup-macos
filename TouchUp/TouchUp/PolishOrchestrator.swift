@@ -79,29 +79,44 @@ class PolishOrchestrator {
             if accepted {
                 // User accepted - replace the text
                 appLogger.info("User accepted - replacing text")
+                let replacementStartTime = Date()
                 
                 // Reactivate the original application
+                let activationStartTime = Date()
                 if let app = frontmostApp {
                     app.activate(options: [])
                     appLogger.debug("Reactivated original app: \(app.localizedName ?? "unknown")")
                 }
                 
                 // Wait for app to become active
-                try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+                try? await Task.sleep(nanoseconds: TouchUpConfig.nanoseconds(TouchUpConfig.appActivationDelay))
+                let activationDuration = Date().timeIntervalSince(activationStartTime) * 1000
+                appLogger.debug("App activation took \(String(format: "%.0f", activationDuration))ms")
                 
                 // Try to replace text using Accessibility API
+                let apiStartTime = Date()
                 let success = await replaceTextViaAccessibility(
                     originalText: selectedText,
                     newText: polishedText
                 )
                 
                 if success {
-                    appLogger.info("Text replaced successfully via Accessibility API")
+                    let apiDuration = Date().timeIntervalSince(apiStartTime) * 1000
+                    appLogger.info("✅ Text replaced via Accessibility API in \(String(format: "%.0f", apiDuration))ms")
                 } else {
+                    let apiDuration = Date().timeIntervalSince(apiStartTime) * 1000
+                    appLogger.debug("Accessibility API attempt took \(String(format: "%.0f", apiDuration))ms (failed)")
+                    
                     // Fallback: use clipboard paste method
                     appLogger.warning("Accessibility API failed, using clipboard fallback")
+                    let fallbackStartTime = Date()
                     try await textReplacer.replaceSelection(with: polishedText)
+                    let fallbackDuration = Date().timeIntervalSince(fallbackStartTime) * 1000
+                    appLogger.info("✅ Text replaced via clipboard fallback in \(String(format: "%.0f", fallbackDuration))ms")
                 }
+                
+                let totalReplacementDuration = Date().timeIntervalSince(replacementStartTime) * 1000
+                appLogger.notice("📊 Total replacement time: \(String(format: "%.0f", totalReplacementDuration))ms")
                 
                 // Step 5a: (Text replacement done above)
                 
@@ -207,16 +222,22 @@ class PolishOrchestrator {
     ///   - newText: The new text to insert
     /// - Returns: true if successful, false otherwise
     private func replaceTextViaAccessibility(originalText: String, newText: String) async -> Bool {
+        let methodStartTime = Date()
+        
         // Get the system-wide accessibility object
         let systemWideElement = AXUIElementCreateSystemWide()
         
         // Get the focused UI element
+        let getFocusedStartTime = Date()
         var focusedElement: CFTypeRef?
         let focusedResult = AXUIElementCopyAttributeValue(
             systemWideElement,
             kAXFocusedUIElementAttribute as CFString,
             &focusedElement
         )
+        
+        let getFocusedDuration = Date().timeIntervalSince(getFocusedStartTime) * 1000
+        appLogger.debug("  ⏱️ Get focused element: \(String(format: "%.1f", getFocusedDuration))ms")
         
         guard focusedResult == .success,
               let element = focusedElement else {
@@ -227,12 +248,16 @@ class PolishOrchestrator {
         let axElement = element as! AXUIElement
         
         // Try to get the current value
+        let getValueStartTime = Date()
         var currentValue: CFTypeRef?
         let valueResult = AXUIElementCopyAttributeValue(
             axElement,
             kAXValueAttribute as CFString,
             &currentValue
         )
+        
+        let getValueDuration = Date().timeIntervalSince(getValueStartTime) * 1000
+        appLogger.debug("  ⏱️ Read value attribute: \(String(format: "%.1f", getValueDuration))ms")
         
         if valueResult == .success,
            let value = currentValue as? String {
@@ -241,14 +266,19 @@ class PolishOrchestrator {
                 let newValue = value.replacingCharacters(in: range, with: newText)
                 
                 // Set the new value
+                let setValueStartTime = Date()
                 let setValue = AXUIElementSetAttributeValue(
                     axElement,
                     kAXValueAttribute as CFString,
                     newValue as CFTypeRef
                 )
                 
+                let setValueDuration = Date().timeIntervalSince(setValueStartTime) * 1000
+                appLogger.debug("  ⏱️ Set value attribute: \(String(format: "%.1f", setValueDuration))ms")
+                
                 if setValue == .success {
-                    appLogger.info("Successfully replaced text via Accessibility API")
+                    let totalDuration = Date().timeIntervalSince(methodStartTime) * 1000
+                    appLogger.info("Successfully replaced text via Accessibility API (total: \(String(format: "%.1f", totalDuration))ms)")
                     return true
                 } else {
                     appLogger.warning("Failed to set value via Accessibility API: \(setValue.rawValue)")

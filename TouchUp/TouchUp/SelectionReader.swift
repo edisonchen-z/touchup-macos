@@ -88,7 +88,7 @@ class SelectionReader {
         await simulateCopyCommand()
         
         // Wait a bit for the copy to complete
-        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        try? await Task.sleep(nanoseconds: TouchUpConfig.nanoseconds(TouchUpConfig.copyCompletionDelay))
         
         // Read the clipboard
         let text = clipboardManager.getClipboardText()
