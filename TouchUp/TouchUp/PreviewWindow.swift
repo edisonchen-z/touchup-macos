@@ -17,10 +17,6 @@ struct PreviewWindow: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // Header
-            Text("Text Preview")
-                .font(.headline)
-                .foregroundColor(.primary)
             
             // Original text section
             VStack(alignment: .leading, spacing: 6) {
@@ -30,7 +26,7 @@ struct PreviewWindow: View {
                 
                 ScrollView {
                     Text(originalText)
-                        .font(.body)
+                        .font(.title3)
                         .foregroundColor(.secondary)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -41,15 +37,15 @@ struct PreviewWindow: View {
                 .frame(height: 100)
             }
             
-            // Polished text section
+            // Touched Up text section
             VStack(alignment: .leading, spacing: 6) {
-                Text("Polished")
+                Text("Refined")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
                 ScrollView {
                     Text(polishedText)
-                        .font(.body)
+                        .font(.title3)
                         .foregroundColor(.primary)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
