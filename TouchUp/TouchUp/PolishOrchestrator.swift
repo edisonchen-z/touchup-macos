@@ -123,11 +123,15 @@ class PolishOrchestrator {
                 // User rejected - keep original text
                 appLogger.info("User rejected - keeping original text")
                 
-                // Step 5b: Restore original clipboard
-                clipboardManager.restoreClipboard(clipboardSnapshot)
-                appLogger.debug("Original clipboard restored")
+                // Reactivate the original application so focus returns
+                if let app = frontmostApp {
+                    app.activate(options: [])
+                    appLogger.debug("Reactivated original app after reject: \(app.localizedName ?? "unknown")")
+                }
                 
-                // Step 6b: Update menu bar icon to normal state
+                // No need to restore clipboard - we never modified it in Reject path
+                
+                // Step 5b: Update menu bar icon to normal state
                 appDelegate?.setMenuBarIconNormal()
                 
                 let duration = Date().timeIntervalSince(workflowStartTime) * 1000
