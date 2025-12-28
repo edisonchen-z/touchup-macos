@@ -19,6 +19,7 @@ class PolishOrchestrator {
     private let ollamaClient: OllamaClient
     private let textReplacer: TextReplacer
     private let notificationManager = NotificationManager.shared
+    private let previewManager: PreviewWindowManager
     
     // Weak reference to AppDelegate for menu bar icon updates
     private weak var appDelegate: AppDelegate?
@@ -31,6 +32,7 @@ class PolishOrchestrator {
         self.selectionReader = SelectionReader(clipboardManager: clipboardManager)
         self.ollamaClient = OllamaClient()
         self.textReplacer = TextReplacer(clipboardManager: clipboardManager)
+        self.previewManager = PreviewWindowManager()
     }
     
     // MARK: - Public Methods
@@ -52,30 +54,84 @@ class PolishOrchestrator {
         
         appLogger.info("Selected text captured: \(selectedText.count) characters")
         
-        // Step 2: Update menu bar icon to "processing" state
+        // Step 2: Remember the frontmost application (before preview steals focus)
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        appLogger.debug("Captured frontmost app: \(frontmostApp?.localizedName ?? "unknown")")
+        
+        // Step 3: Update menu bar icon to "processing" state
         appDelegate?.setMenuBarIconProcessing()
         
-        // Step 3: Send to Ollama for polishing
+        // Step 4: Send to Ollama for polishing
         do {
             let polishedText = try await ollamaClient.polishText(selectedText)
             appLogger.info("Text polished successfully (\(polishedText.count) chars)")
             
-            // Step 4: Replace selection with polished text
-            try await textReplacer.replaceSelection(with: polishedText)
+            // Step 4: Show preview window and wait for user decision
+            appDelegate?.setMenuBarIconAwaitingInput()
             
-            // Step 5: Restore original clipboard
-            clipboardManager.restoreClipboard(clipboardSnapshot)
-            appLogger.debug("Original clipboard restored")
+            let cursorPosition = getCurrentCursorPosition()
+            let accepted = await previewManager.showPreview(
+                original: selectedText,
+                polished: polishedText,
+                cursorPosition: cursorPosition
+            )
             
-            // Step 6: Update menu bar icon to "success" state
-            appDelegate?.setMenuBarIconSuccess()
-            
-            let duration = Date().timeIntervalSince(workflowStartTime) * 1000
-            appLogger.notice("Polish workflow completed in \(String(format: "%.0f", duration))ms")
-            
-            if let startTime = startTime {
-                let turnaroundTime = Date().timeIntervalSince(startTime) * 1000
-                appLogger.notice("Turnaround Time: \(String(format: "%.0f", turnaroundTime))ms")
+            if accepted {
+                // User accepted - replace the text
+                appLogger.info("User accepted - replacing text")
+                
+                // Reactivate the original application
+                if let app = frontmostApp {
+                    app.activate(options: [])
+                    appLogger.debug("Reactivated original app: \(app.localizedName ?? "unknown")")
+                }
+                
+                // Wait for app to become active
+                try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+                
+                // Try to replace text using Accessibility API
+                let success = await replaceTextViaAccessibility(
+                    originalText: selectedText,
+                    newText: polishedText
+                )
+                
+                if success {
+                    appLogger.info("Text replaced successfully via Accessibility API")
+                } else {
+                    // Fallback: use clipboard paste method
+                    appLogger.warning("Accessibility API failed, using clipboard fallback")
+                    try await textReplacer.replaceSelection(with: polishedText)
+                }
+                
+                // Step 5a: (Text replacement done above)
+                
+                // Step 6a: Restore original clipboard
+                clipboardManager.restoreClipboard(clipboardSnapshot)
+                appLogger.debug("Original clipboard restored")
+                
+                // Step 7a: Update menu bar icon to "success" state
+                appDelegate?.setMenuBarIconSuccess()
+                
+                let duration = Date().timeIntervalSince(workflowStartTime) * 1000
+                appLogger.notice("Polish workflow completed (accepted) in \(String(format: "%.0f", duration))ms")
+                
+                if let startTime = startTime {
+                    let turnaroundTime = Date().timeIntervalSince(startTime) * 1000
+                    appLogger.notice("Turnaround Time: \(String(format: "%.0f", turnaroundTime))ms")
+                }
+            } else {
+                // User rejected - keep original text
+                appLogger.info("User rejected - keeping original text")
+                
+                // Step 5b: Restore original clipboard
+                clipboardManager.restoreClipboard(clipboardSnapshot)
+                appLogger.debug("Original clipboard restored")
+                
+                // Step 6b: Update menu bar icon to normal state
+                appDelegate?.setMenuBarIconNormal()
+                
+                let duration = Date().timeIntervalSince(workflowStartTime) * 1000
+                appLogger.notice("Polish workflow completed (rejected) in \(String(format: "%.0f", duration))ms")
             }
             
         } catch let error as OllamaError {
@@ -135,4 +191,74 @@ class PolishOrchestrator {
             )
         }
     }
+    
+    /// Get the current cursor/mouse position for window placement
+    private func getCurrentCursorPosition() -> CGPoint? {
+        return NSEvent.mouseLocation
+    }
+    
+    /// Replace text using Accessibility API
+    /// - Parameters:
+    ///   - originalText: The original text that should be replaced
+    ///   - newText: The new text to insert
+    /// - Returns: true if successful, false otherwise
+    private func replaceTextViaAccessibility(originalText: String, newText: String) async -> Bool {
+        // Get the system-wide accessibility object
+        let systemWideElement = AXUIElementCreateSystemWide()
+        
+        // Get the focused UI element
+        var focusedElement: CFTypeRef?
+        let focusedResult = AXUIElementCopyAttributeValue(
+            systemWideElement,
+            kAXFocusedUIElementAttribute as CFString,
+            &focusedElement
+        )
+        
+        guard focusedResult == .success,
+              let element = focusedElement else {
+            appLogger.warning("No focused UI element found for text replacement")
+            return false
+        }
+        
+        let axElement = element as! AXUIElement
+        
+        // Try to get the current value
+        var currentValue: CFTypeRef?
+        let valueResult = AXUIElementCopyAttributeValue(
+            axElement,
+            kAXValueAttribute as CFString,
+            &currentValue
+        )
+        
+        if valueResult == .success,
+           let value = currentValue as? String {
+            // Find and replace the original text in the value
+            if let range = value.range(of: originalText) {
+                let newValue = value.replacingCharacters(in: range, with: newText)
+                
+                // Set the new value
+                let setValue = AXUIElementSetAttributeValue(
+                    axElement,
+                    kAXValueAttribute as CFString,
+                    newValue as CFTypeRef
+                )
+                
+                if setValue == .success {
+                    appLogger.info("Successfully replaced text via Accessibility API")
+                    return true
+                } else {
+                    appLogger.warning("Failed to set value via Accessibility API: \(setValue.rawValue)")
+                }
+            } else {
+                appLogger.warning("Original text not found in current value")
+            }
+        } else {
+            appLogger.debug("Could not get value attribute, result: \(valueResult.rawValue)")
+        }
+        
+        return false
+    }
 }
+
+
+

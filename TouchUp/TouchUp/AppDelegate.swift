@@ -152,6 +152,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    /// Update menu bar icon to show awaiting input state
+    func setMenuBarIconAwaitingInput() {
+        DispatchQueue.main.async { [weak self] in
+            if let button = self?.statusItem?.button {
+                button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "TouchUp Awaiting Input")
+                appLogger.debug("Menu bar icon: awaiting input")
+            }
+        }
+    }
+    
     /// Reset menu bar icon to normal state
     func setMenuBarIconNormal() {
         DispatchQueue.main.async { [weak self] in
