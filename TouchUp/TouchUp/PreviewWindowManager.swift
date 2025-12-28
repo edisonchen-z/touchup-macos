@@ -93,13 +93,13 @@ class PreviewWindowManager {
         
         // Create the window
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 450, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 450),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         
-        window.title = "TouchUp Preview"
+        window.title = "Review Text Changes"
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.level = .floating // Stay above other windows
