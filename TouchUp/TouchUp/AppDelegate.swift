@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Set the icon to an SF Symbol
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "TouchUp")
+            button.image = NSImage(systemSymbolName: "pencil.line", accessibilityDescription: "TouchUp")
         }
         
         // Create the menu
@@ -174,7 +174,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func setMenuBarIconNormal() {
         DispatchQueue.main.async { [weak self] in
             if let button = self?.statusItem?.button {
-                button.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "TouchUp")
+                button.image = NSImage(systemSymbolName: "pencil.line", accessibilityDescription: "TouchUp")
                 appLogger.debug("Menu bar icon: normal")
             }
         }
