@@ -38,7 +38,13 @@ struct SettingsView: View {
                 Text("Current Configuration")
                     .font(.headline)
                 
-                SettingRow(label: "Hotkey", value: "Cmd + Option + T")
+                HStack {
+                    Text("Hotkey:")
+                        .foregroundColor(.secondary)
+                    HotkeyRecorder()
+                    Spacer()
+                }
+                
                 SettingRow(label: "Selected Model", value: settingsManager.selectedModel)
                 SettingRow(label: "Ollama URL", value: "http://localhost:11434")
             }
@@ -49,10 +55,6 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Coming Soon")
                     .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Text("• Custom hotkey configuration")
-                    .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Text("• Prompt templates")
@@ -138,7 +140,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
+                .foregroundColor(.orange)
                 Text("Cannot connect to Ollama")
                     .font(.headline)
             }
@@ -252,6 +254,74 @@ struct SettingRow: View {
             Spacer()
         }
         .font(.body)
+    }
+}
+
+struct HotkeyRecorder: View {
+    @ObservedObject var settings = SettingsManager.shared
+    @State private var isRecording = false
+    @State private var monitor: Any?
+    
+    var body: some View {
+        Button(action: {
+            isRecording.toggle()
+        }) {
+            if isRecording {
+                Text("Press keys...")
+                    .foregroundColor(.blue)
+                    .fontWeight(.bold)
+            } else {
+                Text(settings.hotkeyString)
+                    .fontWeight(.medium)
+            }
+        }
+        .buttonStyle(.bordered)
+        .onChange(of: isRecording) { _, recording in
+            if recording {
+                startRecording()
+            } else {
+                stopRecording()
+            }
+        }
+    }
+    
+    private func startRecording() {
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Clean modifiers (remove generic flags like shift/control/alt without side)
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            
+            // Ignore just modifier key presses
+            if flags.isEmpty && event.keyCode < 0 {
+                return event
+            }
+            
+            // Require at least one modifier + key, or just function keys
+            // But usually we want Modifiers + Key
+            if !flags.isEmpty {
+                 SettingsManager.shared.updateHotkey(
+                    keyCode: Int(event.keyCode),
+                    modifiers: flags.rawValue
+                )
+                
+                // Stop recording
+                isRecording = false
+                return nil // Consume event
+            }
+            
+            if event.keyCode == 53 { // ESC
+                 isRecording = false
+                 return nil
+            }
+            
+            return nil
+        }
+    }
+    
+    private func stopRecording() {
+        if let monitor = monitor {
+            NSEvent.removeMonitor(monitor)
+            self.monitor = nil
+        }
     }
 }
 

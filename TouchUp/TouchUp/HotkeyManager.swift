@@ -17,14 +17,18 @@ class HotkeyManager {
     private var runLoopSource: CFRunLoopSource?
     private var hotkeyAction: ((Date) -> Void)?
     
-    // Default hotkey: Cmd+Option+T
-    private let targetKeyCode: CGKeyCode = 17 // 'T' key
-    private let targetModifiers: CGEventFlags = [.maskCommand, .maskAlternate]
+    // Dynamic hotkey
+    private var targetKeyCode: CGKeyCode
+    private var targetModifiers: CGEventFlags
     
     // MARK: - Initialization
     
     init() {
-        appLogger.info("HotkeyManager initialized")
+        // Initialize with settings
+        self.targetKeyCode = CGKeyCode(SettingsManager.shared.hotkeyKeyCode)
+        self.targetModifiers = CGEventFlags(rawValue: UInt64(SettingsManager.shared.hotkeyModifiers))
+        
+        appLogger.info("HotkeyManager initialized with hotkey: \(SettingsManager.shared.hotkeyString)")
     }
     
     deinit {
@@ -32,6 +36,25 @@ class HotkeyManager {
     }
     
     // MARK: - Public Methods
+    
+    /// Update the hotkey configuration and re-register
+    /// Update the hotkey configuration and re-register
+    func updateHotkey() {
+        // Capture existing action before unregistering (which clears it)
+        let savedAction = self.hotkeyAction
+        
+        unregister()
+        
+        self.targetKeyCode = CGKeyCode(SettingsManager.shared.hotkeyKeyCode)
+        self.targetModifiers = CGEventFlags(rawValue: UInt64(SettingsManager.shared.hotkeyModifiers))
+        
+        appLogger.info("HotkeyManager updated to: \(SettingsManager.shared.hotkeyString)")
+        
+        // Re-register if we had an action
+        if let action = savedAction {
+            _ = register(action: action)
+        }
+    }
     
     /// Register the global hotkey with a callback action
     /// - Parameter action: Closure to execute when hotkey is pressed
@@ -73,7 +96,7 @@ class HotkeyManager {
         // Enable the event tap
         CGEvent.tapEnable(tap: tap, enable: true)
         
-        appLogger.notice("Global hotkey registered: Cmd+Option+T")
+        appLogger.notice("Global hotkey registered: \(SettingsManager.shared.hotkeyString)")
         return true
     }
     
@@ -142,17 +165,32 @@ class HotkeyManager {
         
         // Get the key code and modifier flags
         let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
-        let flags = event.flags
+
         
-        // Check if this is our target hotkey (Cmd+Option+T)
-        let hasCommand = flags.contains(.maskCommand)
-        let hasOption = flags.contains(.maskAlternate)
-        let isTargetKey = keyCode == targetKeyCode
+        // Check if this is our target hotkey
+        // We need to match the flags exactly, masking out non-modifier flags (like caps lock, num lock etc usually not relevant but handled by mask)
+        // Important: CGEventFlags contains device-independent flags and others. 
+        // We'll trust targetModifiers set from SettingsManager (NSEvent flags) matches CGEvent flags for major modifiers.
         
-        if hasCommand && hasOption && isTargetKey && !flags.contains(.maskControl) && !flags.contains(.maskShift) {
+        // Convert NSEvent modifier flags to CGEventFlags logically for comparison
+        // The raw values are compatible for the main modifiers: Command, Option, Control, Shift.
+        
+        let currentFlags = event.flags
+        let requiredFlags = targetModifiers
+        
+        // Define mask for relevant modifiers: Shift, Control, Option, Command
+        let relevantMask: CGEventFlags = [.maskShift, .maskControl, .maskAlternate, .maskCommand]
+        
+        let maskedCurrent = currentFlags.intersection(relevantMask)
+        let maskedTarget = requiredFlags.intersection(relevantMask)
+        
+        let isFlagMatch = maskedCurrent == maskedTarget
+        let isKeyMatch = keyCode == targetKeyCode
+        
+        if isFlagMatch && isKeyMatch {
             // Hotkey detected!
             let now = Date()
-            appLogger.notice("Hotkey triggered - Cmd+Option+T pressed")
+            appLogger.notice("Hotkey triggered - \(SettingsManager.shared.hotkeyString) pressed")
             
             // Execute the action on the main thread
             DispatchQueue.main.async { [weak self] in

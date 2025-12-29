@@ -106,6 +106,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             appLogger.warning("Hotkey registration failed - prompting for permission")
             hotkeyManager?.promptForAccessibilityPermission()
         }
+        
+        // Listen for hotkey changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleHotkeyChanged),
+            name: Notification.Name("HotkeyChanged"),
+            object: nil
+        )
+    }
+    
+    @objc private func handleHotkeyChanged() {
+        appLogger.info("Received hotkey change notification")
+        hotkeyManager?.updateHotkey()
     }
     
     private func handleHotkeyPressed(startTime: Date) {
