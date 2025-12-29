@@ -99,7 +99,7 @@ class PreviewWindowManager {
             defer: false
         )
         
-        window.title = "Review Text Changes"
+        window.title = "TouchUp Suggestions"
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.level = .floating // Stay above other windows

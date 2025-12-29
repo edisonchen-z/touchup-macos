@@ -20,12 +20,6 @@ struct PreviewWindow: View {
     var body: some View {
         VStack(spacing: 28) {
             
-            // Subtitle for context
-            Text("Compare the original text with the refined version")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
             // Original text section - de-emphasized
             VStack(alignment: .leading, spacing: 8) {
                 Text("Original")
