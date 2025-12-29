@@ -13,9 +13,10 @@ struct TouchUpApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        // Settings scene for Settings window
+        // No window group needed as this is a menu bar app
+        // Settings are handled via AppDelegate
         Settings {
-            SettingsView()
+            EmptyView()
         }
     }
 }

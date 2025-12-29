@@ -8,6 +8,21 @@
 import Foundation
 import os
 
+/// Model information from Ollama
+struct OllamaModel: Identifiable, Codable {
+    let name: String
+    let modifiedAt: String
+    let size: Int64
+    
+    var id: String { name }
+    
+    enum CodingKeys: String, CodingKey {
+        case name
+        case modifiedAt = "modified_at"
+        case size
+    }
+}
+
 /// Errors that can occur during Ollama communication
 enum OllamaError: Error {
     case connectionFailed(Error)
@@ -24,8 +39,12 @@ class OllamaClient {
     // MARK: - Configuration
     
     private let baseURL = "http://127.0.0.1:11434"
-    private let model = "gemma2:9b" // Hardcoded for v1
     private let timeout: TimeInterval = 30.0
+    
+    /// Get the currently selected model from settings
+    private var selectedModel: String {
+        SettingsManager.shared.getSelectedModel()
+    }
     
     // Generation parameters
     private let temperature: Double = 0.1
@@ -43,7 +62,7 @@ class OllamaClient {
         config.timeoutIntervalForResource = timeout
         self.session = URLSession(configuration: config)
         
-        appLogger.info("OllamaClient initialized (model: \(self.model), baseURL: \(self.baseURL))")
+        appLogger.info("OllamaClient initialized (baseURL: \(self.baseURL))")
     }
     
     // MARK: - Public Methods
@@ -70,7 +89,7 @@ class OllamaClient {
         
         // Build request body
         let requestBody: [String: Any] = [
-            "model": model,
+            "model": selectedModel,
             "messages": [
                 ["role": "user", "content": prompt]
             ],
@@ -108,13 +127,60 @@ class OllamaClient {
             return polishedText
             
         case 404:
-            appLogger.error("Model '\(self.model)' not found")
+            appLogger.error("Model '\(self.selectedModel)' not found")
             throw OllamaError.modelNotFound
             
         default:
             let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
             appLogger.error("Ollama server error (\(httpResponse.statusCode)): \(errorMessage)")
             throw OllamaError.serverError(errorMessage)
+        }
+    }
+    
+    /// List all installed Ollama models
+    /// - Returns: Array of installed models
+    /// - Throws: OllamaError if request fails
+    func listInstalledModels() async throws -> [OllamaModel] {
+        guard let url = URL(string: "\(baseURL)/api/tags") else {
+            throw OllamaError.invalidResponse
+        }
+        
+        do {
+            let (data, response) = try await session.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw OllamaError.invalidResponse
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw OllamaError.serverError("Status code: \(httpResponse.statusCode)")
+            }
+            
+            // Parse the response
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let modelsArray = json["models"] as? [[String: Any]] else {
+                appLogger.error("Failed to parse models response")
+                throw OllamaError.invalidResponse
+            }
+            
+            // Convert to OllamaModel objects
+            let models = modelsArray.compactMap { modelDict -> OllamaModel? in
+                guard let name = modelDict["name"] as? String,
+                      let modifiedAt = modelDict["modified_at"] as? String,
+                      let size = modelDict["size"] as? Int64 else {
+                    return nil
+                }
+                return OllamaModel(name: name, modifiedAt: modifiedAt, size: size)
+            }
+            
+            appLogger.info("Found \(models.count) installed Ollama models")
+            return models
+            
+        } catch let error as OllamaError {
+            throw error
+        } catch {
+            appLogger.error("Failed to list models: \(error.localizedDescription)")
+            throw OllamaError.connectionFailed(error)
         }
     }
     
@@ -196,8 +262,8 @@ class OllamaClient {
         // Extract the message content from the response
         // Response format: {"message": {"role": "assistant", "content": "..."}, ...}
         guard let message = json["message"] as? [String: Any],
-              let content = message["content"] as? String,
-              !content.isEmpty else {
+                  let content = message["content"] as? String,
+                  !content.isEmpty else {
             appLogger.error("Empty or invalid response from Ollama")
             throw OllamaError.emptyResponse
         }
