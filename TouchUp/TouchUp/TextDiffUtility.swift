@@ -101,7 +101,7 @@ struct TextDiffUtility {
     }
     
     /// Creates an AttributedString with highlighted changes for the refined text
-    static func createHighlightedText(changes: [WordChange]) -> AttributedString {
+    static func createHighlightedText(changes: [WordChange], fontSize: CGFloat = 17) -> AttributedString {
         var attributed = AttributedString()
         
         for change in changes {
@@ -114,7 +114,7 @@ struct TextDiffUtility {
             case .added, .modified:
                 // Subtle green background for additions/modifications
                 wordString.backgroundColor = Color.green.opacity(0.2)
-                wordString.font = .system(.title3, weight: .semibold)
+                wordString.font = .system(size: fontSize, weight: .semibold)
             case .deleted:
                 // Not shown in refined text
                 break

@@ -16,6 +16,8 @@ class PreviewWindowManager {
     // MARK: - Properties
     
     private var currentWindow: NSWindow?
+    private var windowDelegate: WindowCloseDelegate?
+    private var hasResponded = false
     
     // MARK: - Public Methods
     
@@ -43,15 +45,19 @@ class PreviewWindowManager {
                 self.closeCurrentWindow()
                 
                 // Create the window
-                let window = self.createWindow(
+                let (window, delegate) = self.createWindow(
                     original: original,
                     polished: polished,
                     onAccept: {
+                        guard !self.hasResponded else { return }
+                        self.hasResponded = true
                         appLogger.notice("User accepted polished text")
                         continuation.resume(returning: true)
                         self.closeCurrentWindow()
                     },
                     onReject: {
+                        guard !self.hasResponded else { return }
+                        self.hasResponded = true
                         appLogger.notice("User rejected polished text")
                         continuation.resume(returning: false)
                         self.closeCurrentWindow()
@@ -66,6 +72,8 @@ class PreviewWindowManager {
                 NSApp.activate(ignoringOtherApps: true)
                 
                 self.currentWindow = window
+                self.windowDelegate = delegate
+                self.hasResponded = false // Reset flag for this new window
                 appLogger.debug("Preview window displayed")
             }
         }
@@ -79,7 +87,7 @@ class PreviewWindowManager {
         polished: String,
         onAccept: @escaping () -> Void,
         onReject: @escaping () -> Void
-    ) -> NSWindow {
+    ) -> (window: NSWindow, delegate: WindowCloseDelegate) {
         // Create the SwiftUI view
         let contentView = PreviewWindow(
             originalText: original,
@@ -94,7 +102,7 @@ class PreviewWindowManager {
         // Create the window
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 450),
-            styleMask: [.titled, .closable],
+            styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -105,10 +113,11 @@ class PreviewWindowManager {
         window.level = .floating // Stay above other windows
         window.isMovableByWindowBackground = true
         
-        // Handle window close button
-        window.delegate = WindowCloseDelegate(onClose: onReject)
+        // Handle window close button - store strong reference to prevent deallocation
+        let delegate = WindowCloseDelegate(onClose: onReject)
+        window.delegate = delegate
         
-        return window
+        return (window, delegate)
     }
     
     /// Position the window near the cursor or center on screen
@@ -164,6 +173,7 @@ class PreviewWindowManager {
         if let window = currentWindow {
             window.close()
             currentWindow = nil
+            windowDelegate = nil
             appLogger.debug("Closed preview window")
         }
     }

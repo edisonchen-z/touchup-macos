@@ -97,18 +97,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    // MARK: - Helper Methods
-    
-    /// Show a temporary notification (for testing/feedback)
-    private func showTemporaryNotification(title: String, message: String) {
-        let notification = NSUserNotification()
-        notification.title = title
-        notification.informativeText = message
-        notification.soundName = nil // Silent
-        NSUserNotificationCenter.default.deliver(notification)
-        
-        appLogger.debug("Delivered notification: \(message)")
-    }
     
     // MARK: - Menu Bar Icon States
     
