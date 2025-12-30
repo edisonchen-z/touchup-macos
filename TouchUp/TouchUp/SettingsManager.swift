@@ -36,6 +36,47 @@ class SettingsManager: ObservableObject {
     private let defaultKeyCode = 17
     private let defaultModifiers = NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.option.rawValue
     
+    public let defaultInstruction = """
+You are a text editor.
+
+Polish the text for clarity and correctness in a light-touch way, like a human quickly editing their own writing.
+
+Rules:
+- Fix grammar, spelling, and punctuation errors.
+- Improve clarity with minimal rewrites (small phrase-level edits).
+- Preserve the original meaning, tone, stance, and level of certainty.
+- Do NOT make the text more formal or more professional.
+- Do NOT add new ideas, explanations, or reasons.
+- Do NOT introduce obligation words (should, need, must, require).
+- Prefer original wording unless it is incorrect or unclear.
+- Do NOT introduce hyphens, dashes, or semicolons (including "-", "—", or ";").
+- This rule applies only to new punctuation. Preserve any hyphens or semicolons that already exist in the original text unless they are incorrect.
+- If you would normally use "-" or ";" to connect clauses, use a period instead.
+
+Examples (punctuation style only):
+
+Bad (do NOT introduce):
+"This is a little unclear - I might be missing something."
+Good:
+"This is a little unclear. I might be missing something."
+
+Bad (do NOT introduce):
+"Sorry for the delay; I've been busy most of the day."
+Good:
+"Sorry for the delay. I've been busy most of the day."
+
+Make changes when:
+- There is a clear grammar/spelling/punctuation error, OR
+- A phrase is awkward enough that it could be misread, OR
+- A sentence is ambiguous and can be clarified without changing stance.
+"""
+
+    public let promptSuffix = """
+Output ONLY the revised text. No preface or labels.
+
+Text to polish:
+"""
+    
     // MARK: - Initialization
     
     private init() {
@@ -45,6 +86,24 @@ class SettingsManager: ObservableObject {
         // Load hotkey or use default
         self.hotkeyKeyCode = UserDefaults.standard.object(forKey: hotkeyKeyCodeKey) as? Int ?? defaultKeyCode
         self.hotkeyModifiers = UserDefaults.standard.object(forKey: hotkeyModifiersKey) as? UInt ?? defaultModifiers
+        
+        // Load prompt settings
+        self.customPromptEnabled = UserDefaults.standard.bool(forKey: "customPromptEnabled")
+        self.customPromptText = UserDefaults.standard.string(forKey: "customPromptText") ?? defaultInstruction
+    }
+    
+    // MARK: - Prompt Properties
+    
+    @Published var customPromptEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(customPromptEnabled, forKey: "customPromptEnabled")
+        }
+    }
+    
+    @Published var customPromptText: String {
+        didSet {
+            UserDefaults.standard.set(customPromptText, forKey: "customPromptText")
+        }
     }
     
     // MARK: - Hotkey Properties

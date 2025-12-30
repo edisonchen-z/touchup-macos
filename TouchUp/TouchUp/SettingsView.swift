@@ -16,73 +16,103 @@ struct SettingsView: View {
     private let ollamaClient = OllamaClient()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("TouchUp Settings")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Divider()
-            
-            // Model Selection Section
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Ollama Model")
-                    .font(.headline)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("TouchUp Settings")
+                    .font(.title)
+                    .fontWeight(.bold)
                 
-                modelSelectionView
-            }
-            
-            Divider()
-            
-            // Current Configuration
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Current Configuration")
-                    .font(.headline)
+                Divider()
                 
-                HStack {
-                    Text("Hotkey:")
-                        .foregroundColor(.secondary)
-                    HotkeyRecorder()
-                    Spacer()
+                // Model Selection Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Ollama Model")
+                        .font(.headline)
+                    
+                    modelSelectionView
                 }
                 
-                SettingRow(label: "Selected Model", value: settingsManager.selectedModel)
-                SettingRow(label: "Ollama URL", value: "http://localhost:11434")
+                Divider()
+                
+                // Prompt Settings
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Prompt Strategy")
+                        .font(.headline)
+                    
+                    Picker("", selection: $settingsManager.customPromptEnabled) {
+                        Text("Use the default prompt (recommended for clarity)").tag(false)
+                        Text("Use a custom prompt (for your own style)").tag(true)
+                    }
+                    .pickerStyle(.radioGroup)
+                    .labelsHidden()
+                    
+                    if settingsManager.customPromptEnabled {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Custom Prompt Template:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            TextEditor(text: $settingsManager.customPromptText)
+                                .font(.system(size: 12, design: .monospaced))
+                                .frame(height: 120)
+                                .padding(4)
+                                .background(Color(NSColor.textBackgroundColor))
+                                .cornerRadius(4)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                                )
+                            
+                            Text("Formatting rules (return only revised text) are automatically applied.")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .transition(.opacity)
+                    }
+                }
+                
+                Divider()
+                
+                // Current Configuration
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Current Configuration")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("Hotkey:")
+                            .foregroundColor(.secondary)
+                        HotkeyRecorder()
+                        Spacer()
+                    }
+                    
+                    SettingRow(label: "Selected Model", value: settingsManager.selectedModel)
+                    SettingRow(label: "Ollama URL", value: "http://localhost:11434")
+                }
+                
+
+                
+                Spacer()
+                
+                // Instructions
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Requirements")
+                        .font(.headline)
+                    
+                    Text("1. Ollama must be running: ollama serve")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("2. Model must be installed: ollama pull <model-name>")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("3. Accessibility permission must be granted")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
-            
-            Divider()
-            
-            // Future Features
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Coming Soon")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Text("• Prompt templates")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            // Instructions
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Requirements")
-                    .font(.headline)
-                
-                Text("1. Ollama must be running: ollama serve")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("2. Model must be installed: ollama pull <model-name>")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("3. Accessibility permission must be granted")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            .padding(30)
         }
-        .padding(30)
         .frame(minWidth: 450, minHeight: 500)
         .onAppear {
             loadModels()
