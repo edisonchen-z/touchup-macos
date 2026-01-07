@@ -77,7 +77,7 @@ class OllamaClient {
         
         // Build the prompt
         let prompt = buildPolishPrompt(input)
-        appLogger.info("Full Prompt Sent to Ollama:\n\(prompt)")
+        appLogger.debug("Full Prompt Sent to Ollama:\n\(prompt)")
         
         // Create the request
         guard let url = URL(string: "\(baseURL)/api/chat") else {
