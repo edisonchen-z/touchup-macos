@@ -73,6 +73,31 @@ struct SettingsView: View {
                 
                 Divider()
                 
+                // Ollama Configurations Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Ollama Configurations")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("Keep Alive:")
+                            .frame(width: 100, alignment: .leading)
+                        Stepper(
+                            "\(settingsManager.keepAliveMinutes) min",
+                            value: $settingsManager.keepAliveMinutes,
+                            in: 1...120,
+                            step: 5
+                        )
+                        .frame(width: 120)
+                        Spacer()
+                    }
+                    
+                    Text("How long Ollama keeps the model loaded after a request")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Divider()
+                
                 // Current Configuration
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Current Configuration")

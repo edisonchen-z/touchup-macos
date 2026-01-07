@@ -95,6 +95,7 @@ class OllamaClient {
                 ["role": "user", "content": prompt]
             ],
             "stream": false, // Non-streaming for v1
+            "keep_alive": "\(SettingsManager.shared.keepAliveMinutes)m",
             "options": [
                 "temperature": temperature,
                 "top_p": topP,
@@ -102,6 +103,8 @@ class OllamaClient {
                 "repeat_penalty": repeatPenalty
             ]
         ]
+        
+        appLogger.info("Ollama API params - keep_alive: \(SettingsManager.shared.keepAliveMinutes)m")
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         
