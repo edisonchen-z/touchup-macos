@@ -31,12 +31,14 @@ class SettingsManager: ObservableObject {
     private let hotkeyKeyCodeKey = "hotkeyKeyCode"
     private let hotkeyModifiersKey = "hotkeyModifiers"
     private let keepAliveMinutesKey = "keepAliveMinutes"
+    private let contextLengthKey = "contextLength"
     
     // Default: Cmd + Option + T (17)
     private let defaultModel = "gemma2:9b"
     private let defaultKeyCode = 17
     private let defaultModifiers = NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.option.rawValue
     private let defaultKeepAliveMinutes = 30
+    private let defaultContextLength = 4096
     
     public let defaultInstruction = """
 You are a text editor.
@@ -95,6 +97,7 @@ Text to polish:
         
         // Load Ollama configuration
         self.keepAliveMinutes = UserDefaults.standard.object(forKey: keepAliveMinutesKey) as? Int ?? defaultKeepAliveMinutes
+        self.contextLength = UserDefaults.standard.object(forKey: contextLengthKey) as? Int ?? defaultContextLength
     }
     
     // MARK: - Prompt Properties
@@ -116,6 +119,12 @@ Text to polish:
     @Published var keepAliveMinutes: Int {
         didSet {
             UserDefaults.standard.set(keepAliveMinutes, forKey: keepAliveMinutesKey)
+        }
+    }
+    
+    @Published var contextLength: Int {
+        didSet {
+            UserDefaults.standard.set(contextLength, forKey: contextLengthKey)
         }
     }
     

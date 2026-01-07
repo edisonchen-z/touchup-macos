@@ -94,6 +94,22 @@ struct SettingsView: View {
                     Text("How long Ollama keeps the model loaded after a request")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    
+                    HStack {
+                        Text("Context Length:")
+                            .frame(width: 100, alignment: .leading)
+                        Picker("", selection: $settingsManager.contextLength) {
+                            Text("2048").tag(2048)
+                            Text("4096").tag(4096)
+                            Text("8192").tag(8192)
+                        }
+                        .frame(width: 100)
+                        Spacer()
+                    }
+                    
+                    Text("Controls how much text the model can process at once (prompt + response)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 
                 Divider()

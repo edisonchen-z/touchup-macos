@@ -100,11 +100,12 @@ class OllamaClient {
                 "temperature": temperature,
                 "top_p": topP,
                 "top_k": topK,
-                "repeat_penalty": repeatPenalty
+                "repeat_penalty": repeatPenalty,
+                "num_ctx": SettingsManager.shared.contextLength
             ]
         ]
         
-        appLogger.info("Ollama API params - keep_alive: \(SettingsManager.shared.keepAliveMinutes)m")
+        appLogger.info("Ollama API params - keep_alive: \(SettingsManager.shared.keepAliveMinutes)m, num_ctx: \(SettingsManager.shared.contextLength)")
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         
