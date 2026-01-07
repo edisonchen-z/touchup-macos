@@ -46,7 +46,10 @@ struct TextDiffUtility {
                     words.append(currentWord)
                     currentWord = ""
                 }
-                if !char.isWhitespace || (words.last != " ") {
+                // Preserve newlines as distinct tokens; collapse other whitespace
+                if char.isNewline {
+                    words.append(String(char))
+                } else if !char.isWhitespace || (words.last != " ") {
                     words.append(String(char))
                 }
             } else {
