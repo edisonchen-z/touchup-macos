@@ -110,6 +110,12 @@ struct SettingsView: View {
                     Text("Controls how much text the model can process at once (prompt + response)")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    
+                    Toggle("Dynamic Token Prediction", isOn: $settingsManager.dynamicTokenPredictionEnabled)
+                    
+                    Text("Set output limit based on input length to improve performance")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 
                 Divider()

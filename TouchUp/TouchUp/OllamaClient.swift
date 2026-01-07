@@ -88,6 +88,27 @@ class OllamaClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        // Build options dictionary
+        var options: [String: Any] = [
+            "temperature": temperature,
+            "top_p": topP,
+            "top_k": topK,
+            "repeat_penalty": repeatPenalty,
+            "num_ctx": SettingsManager.shared.contextLength
+        ]
+        
+        // Add dynamic num_predict if enabled, otherwise use default
+        var numPredictLog = ""
+        if SettingsManager.shared.dynamicTokenPredictionEnabled {
+            let estimatedInputTokens = estimateTokenCount(for: input)
+            let numPredict = Int(Double(estimatedInputTokens) * 2.0)
+            options["num_predict"] = numPredict
+            numPredictLog = "\(numPredict) (dynamic, from \(input.count) chars)"
+        } else {
+            options["num_predict"] = 512
+            numPredictLog = "512 (default)"
+        }
+        
         // Build request body
         let requestBody: [String: Any] = [
             "model": selectedModel,
@@ -96,16 +117,10 @@ class OllamaClient {
             ],
             "stream": false, // Non-streaming for v1
             "keep_alive": "\(SettingsManager.shared.keepAliveMinutes)m",
-            "options": [
-                "temperature": temperature,
-                "top_p": topP,
-                "top_k": topK,
-                "repeat_penalty": repeatPenalty,
-                "num_ctx": SettingsManager.shared.contextLength
-            ]
+            "options": options
         ]
         
-        appLogger.info("Ollama API params - keep_alive: \(SettingsManager.shared.keepAliveMinutes)m, num_ctx: \(SettingsManager.shared.contextLength)")
+        appLogger.info("Ollama API params - keep_alive: \(SettingsManager.shared.keepAliveMinutes)m, num_ctx: \(SettingsManager.shared.contextLength), num_predict: \(numPredictLog)")
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
         
@@ -251,6 +266,18 @@ class OllamaClient {
         }
         
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Estimate token count based on character count
+    /// CJK-aware heuristic: CJK characters typically map to 1-2 tokens each
+    private func estimateTokenCount(for text: String) -> Int {
+        let chars = text.count
+        let containsCJK = text.unicodeScalars.contains {
+            $0.value >= 0x4E00 && $0.value <= 0x9FFF   // basic CJK range
+        }
+        
+        let ratio: Double = containsCJK ? 1.3 : 3.8
+        return max(1, Int(ceil(Double(chars) / ratio)))
     }
 }
 

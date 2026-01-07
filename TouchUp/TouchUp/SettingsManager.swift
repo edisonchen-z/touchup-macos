@@ -32,6 +32,7 @@ class SettingsManager: ObservableObject {
     private let hotkeyModifiersKey = "hotkeyModifiers"
     private let keepAliveMinutesKey = "keepAliveMinutes"
     private let contextLengthKey = "contextLength"
+    private let dynamicTokenPredictionEnabledKey = "dynamicTokenPredictionEnabled"
     
     // Default: Cmd + Option + T (17)
     private let defaultModel = "gemma2:9b"
@@ -98,6 +99,7 @@ Text to polish:
         // Load Ollama configuration
         self.keepAliveMinutes = UserDefaults.standard.object(forKey: keepAliveMinutesKey) as? Int ?? defaultKeepAliveMinutes
         self.contextLength = UserDefaults.standard.object(forKey: contextLengthKey) as? Int ?? defaultContextLength
+        self.dynamicTokenPredictionEnabled = UserDefaults.standard.object(forKey: dynamicTokenPredictionEnabledKey) as? Bool ?? true
     }
     
     // MARK: - Prompt Properties
@@ -125,6 +127,12 @@ Text to polish:
     @Published var contextLength: Int {
         didSet {
             UserDefaults.standard.set(contextLength, forKey: contextLengthKey)
+        }
+    }
+    
+    @Published var dynamicTokenPredictionEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(dynamicTokenPredictionEnabled, forKey: dynamicTokenPredictionEnabledKey)
         }
     }
     
