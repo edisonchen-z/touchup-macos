@@ -44,36 +44,21 @@ class SettingsManager: ObservableObject {
     public let defaultInstruction = """
 You are a text editor.
 
-Polish the text for clarity and correctness in a light-touch way, like a human quickly editing their own writing.
+Polish the text so it sounds natural and professional to a native English speaker.
 
 Rules:
+
 - Fix grammar, spelling, and punctuation errors.
-- Improve clarity with minimal rewrites (small phrase-level edits).
+
+- If better wording would improve clarity, you may adjust the wording.
+
 - Preserve the original meaning, tone, stance, and level of certainty.
-- Do NOT make the text more formal or more professional.
+
 - Do NOT add new ideas, explanations, or reasons.
-- Do NOT introduce obligation words (should, need, must, require).
-- Prefer original wording unless it is incorrect or unclear.
-- Do NOT introduce hyphens, dashes, or semicolons (including "-", "—", or ";").
-- This rule applies only to new punctuation. Preserve any hyphens or semicolons that already exist in the original text unless they are incorrect.
-- If you would normally use "-" or ";" to connect clauses, use a period instead.
 
-Examples (punctuation style only):
+- Do NOT introduce hyphens, dashes, or semicolons, including "-", "—", or ";".
 
-Bad (do NOT introduce):
-"This is a little unclear - I might be missing something."
-Good:
-"This is a little unclear. I might be missing something."
-
-Bad (do NOT introduce):
-"Sorry for the delay; I've been busy most of the day."
-Good:
-"Sorry for the delay. I've been busy most of the day."
-
-Make changes when:
-- There is a clear grammar/spelling/punctuation error, OR
-- A phrase is awkward enough that it could be misread, OR
-- A sentence is ambiguous and can be clarified without changing stance.
+- Do NOT remove greetings, sign offs, or polite phrases.
 """
 
     public let promptSuffix = """

@@ -40,8 +40,18 @@ struct SettingsView: View {
                         .font(.headline)
                     
                     Picker("", selection: $settingsManager.customPromptEnabled) {
-                        Text("Use the default prompt (recommended for clarity)").tag(false)
-                        Text("Use a custom prompt (for your own style)").tag(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Use the default prompt")
+                            Text("Keeps your original intent and tone. Improves clarity and grammar.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }.tag(false)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Use a custom prompt")
+                            Text("Define your own style, rules, and instructions.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }.tag(true)
                     }
                     .pickerStyle(.radioGroup)
                     .labelsHidden()

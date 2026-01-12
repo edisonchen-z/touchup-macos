@@ -98,10 +98,12 @@ class OllamaClient {
         ]
         
         // Add dynamic num_predict if enabled, otherwise use default
+        // Use 3x multiplier with a minimum floor to prevent truncation on short inputs
         var numPredictLog = ""
         if SettingsManager.shared.dynamicTokenPredictionEnabled {
             let estimatedInputTokens = estimateTokenCount(for: input)
-            let numPredict = Int(Double(estimatedInputTokens) * 2.0)
+            let calculatedTokens = Int(Double(estimatedInputTokens) * 3.0)
+            let numPredict = max(128, calculatedTokens) // Ensure minimum of 128 tokens
             options["num_predict"] = numPredict
             numPredictLog = "\(numPredict) (dynamic, from \(input.count) chars)"
         } else {
