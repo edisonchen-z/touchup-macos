@@ -33,6 +33,7 @@ class SettingsManager: ObservableObject {
     private let keepAliveMinutesKey = "keepAliveMinutes"
     private let contextLengthKey = "contextLength"
     private let dynamicTokenPredictionEnabledKey = "dynamicTokenPredictionEnabled"
+    private let ollamaServerAddressKey = "ollamaServerAddress"
     
     // Default: Cmd + Option + T (17)
     private let defaultModel = "gemma2:9b"
@@ -40,6 +41,7 @@ class SettingsManager: ObservableObject {
     private let defaultModifiers = NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.option.rawValue
     private let defaultKeepAliveMinutes = 30
     private let defaultContextLength = 4096
+    private let defaultOllamaServerAddress = "http://localhost:11434"
     
     public let defaultInstruction = """
 You are a text editor.
@@ -85,6 +87,7 @@ Text to polish:
         self.keepAliveMinutes = UserDefaults.standard.object(forKey: keepAliveMinutesKey) as? Int ?? defaultKeepAliveMinutes
         self.contextLength = UserDefaults.standard.object(forKey: contextLengthKey) as? Int ?? defaultContextLength
         self.dynamicTokenPredictionEnabled = UserDefaults.standard.object(forKey: dynamicTokenPredictionEnabledKey) as? Bool ?? true
+        self.ollamaServerAddress = UserDefaults.standard.string(forKey: ollamaServerAddressKey) ?? defaultOllamaServerAddress
     }
     
     // MARK: - Prompt Properties
@@ -118,6 +121,12 @@ Text to polish:
     @Published var dynamicTokenPredictionEnabled: Bool {
         didSet {
             UserDefaults.standard.set(dynamicTokenPredictionEnabled, forKey: dynamicTokenPredictionEnabledKey)
+        }
+    }
+    
+    @Published var ollamaServerAddress: String {
+        didSet {
+            UserDefaults.standard.set(ollamaServerAddress, forKey: ollamaServerAddressKey)
         }
     }
     

@@ -13,28 +13,52 @@ struct SettingsView: View {
     @State private var availableModels: [OllamaModel] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var isAdvancedExpanded = false
+    @State private var keepAliveText: String = ""
     private let ollamaClient = OllamaClient()
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("TouchUp Settings")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                Divider()
-                
-                // Model Selection Section
+                // 1. Ollama Settings Section
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Ollama Model")
+                    Text("Ollama Settings")
                         .font(.headline)
                     
+                    Text("Ollama Model")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
                     modelSelectionView
+                    
+                    Text("Ollama Server Address")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 8)
+                    
+                    TextField("Server address", text: $settingsManager.ollamaServerAddress)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 300)
                 }
                 
                 Divider()
                 
-                // Prompt Settings
+                // 2. Hotkey Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Hotkey")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("Hotkey:")
+                            .foregroundColor(.secondary)
+                        HotkeyRecorder()
+                        Spacer()
+                    }
+                }
+                
+                Divider()
+                
+                // 3. Prompt Strategy Section
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Prompt Strategy")
                         .font(.headline)
@@ -83,95 +107,84 @@ struct SettingsView: View {
                 
                 Divider()
                 
-                // Ollama Configurations Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Ollama Configurations")
-                        .font(.headline)
-                    
-                    HStack {
-                        Text("Keep Alive:")
-                            .frame(width: 100, alignment: .leading)
-                        Stepper(
-                            "\(settingsManager.keepAliveMinutes) min",
-                            value: $settingsManager.keepAliveMinutes,
-                            in: 1...120,
-                            step: 5
-                        )
-                        .frame(width: 120)
-                        Spacer()
-                    }
-                    
-                    Text("How long Ollama keeps the model loaded after a request")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    HStack {
-                        Text("Context Length:")
-                            .frame(width: 100, alignment: .leading)
-                        Picker("", selection: $settingsManager.contextLength) {
-                            Text("2048").tag(2048)
-                            Text("4096").tag(4096)
-                            Text("8192").tag(8192)
+                // 4. Advanced Ollama Settings Section
+                DisclosureGroup("Advanced Ollama Settings", isExpanded: $isAdvancedExpanded) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Keep Alive:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .frame(width: 100, alignment: .leading)
+                            TextField("", text: $keepAliveText)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 60)
+                                .onChange(of: keepAliveText) { _, newValue in
+                                    // Allow empty, "-", "-1", or positive integers
+                                    let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                                    if trimmed.isEmpty || trimmed == "-" {
+                                        return
+                                    }
+                                    if let value = Int(trimmed), value == -1 || value >= 1 {
+                                        settingsManager.keepAliveMinutes = value
+                                    } else {
+                                        // Revert to last valid value
+                                        keepAliveText = String(settingsManager.keepAliveMinutes)
+                                    }
+                                }
+                            Text("min")
+                                .foregroundColor(.secondary)
+                            Spacer()
                         }
-                        .frame(width: 100)
-                        Spacer()
-                    }
-                    
-                    Text("Controls how much text the model can process at once (prompt + response)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Toggle("Dynamic Token Prediction", isOn: $settingsManager.dynamicTokenPredictionEnabled)
-                    
-                    Text("Set output limit based on input length to improve performance")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Divider()
-                
-                // Current Configuration
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Current Configuration")
-                        .font(.headline)
-                    
-                    HStack {
-                        Text("Hotkey:")
+                        
+                        Text("How long Ollama keeps the model loaded after a request")
+                            .font(.caption)
                             .foregroundColor(.secondary)
-                        HotkeyRecorder()
-                        Spacer()
+                        
+                        HStack {
+                            Text("Context Length:")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .frame(width: 100, alignment: .leading)
+                            Picker("", selection: $settingsManager.contextLength) {
+                                Text("2048").tag(2048)
+                                Text("4096").tag(4096)
+                                Text("8192").tag(8192)
+                            }
+                            .frame(width: 100)
+                            Spacer()
+                        }
+                        
+                        Text("Controls how much text the model can process at once (prompt + response)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        HStack {
+                            Text("Dynamic Token Prediction")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Toggle("", isOn: $settingsManager.dynamicTokenPredictionEnabled)
+                                .labelsHidden()
+                            Spacer()
+                        }
+                        
+                        Text("Set output limit based on input length to improve performance")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    
-                    SettingRow(label: "Selected Model", value: settingsManager.selectedModel)
-                    SettingRow(label: "Ollama URL", value: "http://localhost:11434")
+                    .padding(.top, 8)
                 }
+                .font(.headline)
                 
 
                 
                 Spacer()
                 
-                // Instructions
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Requirements")
-                        .font(.headline)
-                    
-                    Text("1. Ollama must be running: ollama serve")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("2. Model must be installed: ollama pull <model-name>")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("3. Accessibility permission must be granted")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
             }
             .padding(30)
         }
         .frame(minWidth: 450, minHeight: 500)
         .onAppear {
+            keepAliveText = String(settingsManager.keepAliveMinutes)
             loadModels()
         }
     }

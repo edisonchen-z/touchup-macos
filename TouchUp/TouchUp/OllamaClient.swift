@@ -38,7 +38,10 @@ class OllamaClient {
     
     // MARK: - Configuration
     
-    private let baseURL = "http://127.0.0.1:11434"
+    /// Get the server address from settings
+    private var baseURL: String {
+        SettingsManager.shared.ollamaServerAddress
+    }
     private let timeout: TimeInterval = 30.0
     
     /// Get the currently selected model from settings
