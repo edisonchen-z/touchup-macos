@@ -29,7 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Settings menu item
         let settingsItem = NSMenuItem(
-            title: "Settings…",
+            title: "TouchUp Settings…",
             action: #selector(openSettings),
             keyEquivalent: ","
         )
@@ -40,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Quit menu item
         let quitItem = NSMenuItem(
-            title: "Quit",
+            title: "Quit TouchUp",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
