@@ -66,13 +66,13 @@ struct SettingsView: View {
                     Picker("", selection: $settingsManager.customPromptEnabled) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Use the default prompt")
-                            Text("Keeps your original intent and tone. Improves clarity and grammar.")
+                            Text("Keeps original tone. Improves only grammar and clarity")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }.tag(false)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Use a custom prompt")
-                            Text("Define your own style, rules, and instructions.")
+                            Text("Define your own style and rules")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }.tag(true)
@@ -136,7 +136,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                         
-                        Text("How long Ollama keeps the model loaded after a request")
+                        Text("Time a model remains loaded in memory after a request")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
@@ -154,7 +154,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                         
-                        Text("Controls how much text the model can process at once (prompt + response)")
+                        Text("Max tokens per request (prompt + response)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
@@ -167,7 +167,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                         
-                        Text("Set output limit based on input length to improve performance")
+                        Text("Optimize output limit for lower latency")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
