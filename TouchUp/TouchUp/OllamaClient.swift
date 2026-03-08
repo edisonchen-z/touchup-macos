@@ -294,7 +294,7 @@ extension OllamaError: LocalizedError {
         case .connectionFailed(let error):
             return "Cannot connect to Ollama: \(error.localizedDescription)"
         case .modelNotFound:
-            return "Model not found. Run: ollama pull qwen2.5:3b"
+            return "Model not found. Run: ollama pull <model_name>"
         case .timeout:
             return "Request timed out"
         case .emptyResponse:

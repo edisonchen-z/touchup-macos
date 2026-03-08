@@ -188,8 +188,9 @@ class PolishOrchestrator {
             notificationManager.showOllamaSetupAlert()
             
         case .modelNotFound:
-            appLogger.error("Model not found: qwen2.5:3b")
-            notificationManager.showModelNotFoundAlert(model: "qwen2.5:3b")
+            let model = SettingsManager.shared.getSelectedModel()
+            appLogger.error("Model not found: \(model)")
+            notificationManager.showModelNotFoundAlert(model: model)
             
         case .timeout:
             appLogger.error("Ollama request timeout")
