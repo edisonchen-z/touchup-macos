@@ -1,10 +1,3 @@
-//
-//  Logging.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/22/25.
-//
-
 import os
 
 // Global logger for the TouchUp app

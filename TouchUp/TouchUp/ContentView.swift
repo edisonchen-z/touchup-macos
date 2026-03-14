@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/22/25.
-//
-
 import SwiftUI
 import os
 

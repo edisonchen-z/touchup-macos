@@ -1,10 +1,3 @@
-//
-//  TextDiffUtility.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/28/25.
-//
-
 import Foundation
 import SwiftUI
 

@@ -1,10 +1,3 @@
-//
-//  SettingsManager.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/29/25.
-//
-
 import Cocoa
 import Foundation
 import os

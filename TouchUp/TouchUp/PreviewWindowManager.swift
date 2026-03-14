@@ -1,10 +1,3 @@
-//
-//  PreviewWindowManager.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/26/25.
-//
-
 import Cocoa
 import SwiftUI
 import os

@@ -1,10 +1,3 @@
-//
-//  PreviewWindow.swift
-//  TouchUp
-//
-//  Created by Edison Chen on 12/26/25.
-//
-
 import SwiftUI
 
 /// SwiftUI view for the text preview window
