@@ -124,7 +124,14 @@ class OllamaClient {
         
         // Make the request
         let networkStartTime = Date()
-        let (data, response) = try await session.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            appLogger.error("Failed to connect to Ollama: \(error.localizedDescription)")
+            throw OllamaError.connectionFailed(error)
+        }
         let networkDuration = Date().timeIntervalSince(networkStartTime) * 1000
         appLogger.info("Ollama Latency: \(String(format: "%.0f", networkDuration))ms")
         

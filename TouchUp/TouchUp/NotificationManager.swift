@@ -71,7 +71,7 @@ class NotificationManager {
         Start Ollama with:
           ollama serve
         
-        Or install it from: https://ollama.ai
+        Or install it from: https://ollama.com/
         """
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")

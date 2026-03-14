@@ -78,6 +78,17 @@ TouchUp requires **Accessibility access** to read selected text and write the re
 
 **System Settings → Privacy & Security → Accessibility**
 
+## Latency
+
+Tested on **Apple M3 Max** with `gemma2:9b` — input: **284 characters**.
+
+| Scenario | Ollama Latency |
+|---|---|
+| Cold start (model not loaded) | 2782ms |
+| Warm (model already loaded) | 1580ms |
+
+The warm model is **~43% faster** on Ollama inference thanks to `keep_alive` (default: 60 minutes), which keeps the model in memory between calls.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
