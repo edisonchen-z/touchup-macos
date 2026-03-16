@@ -14,15 +14,11 @@ Most AI writing tools send your text to the cloud. TouchUp takes a different app
 - **No API cost** — No API keys, no subscriptions, no token usage fees.
 - **Private by design** — No data collection, no telemetry, no network calls.
 
-TouchUp is inspired by the [Ollama](https://ollama.com/) project and its rapidly growing ecosystem. It is part of a broader effort to build a **local LLM ecosystem** — practical, everyday tools powered entirely by models running on your own hardware.
+TouchUp is inspired by the [Ollama](https://ollama.com/) project. It's part of a growing movement to build practical, everyday tools powered entirely by local models running on your own hardware.
 
 ## See It in Action
 
-1. **Draft your text** — Write an email, a quick note to a teammate, or anything else — right where you normally would.
-2. **Select & trigger** — With TouchUp running quietly in the menu bar, select your draft and press the hotkey (`⌘ ⌥ T`).
-3. **Local LLM takes over** — TouchUp sends the text to a local model running on your machine. It corrects grammar, fixes typos, and improves clarity — all while preserving your original tone. No network required. No paid cloud LLM subscription.
-4. **Review & accept** — A suggestion window appears with the refined text. Accept it, and TouchUp automatically replaces the selected text.
-5. **Works in any app** — TouchUp uses the system clipboard under the hood, so it works everywhere on your Mac — Apple Notes, Mail, Slack, VS Code, you name it.
+Select any text, press the hotkey, and TouchUp handles the rest — grammar, spelling, clarity — all in place.
 
 | Before | TouchUp Suggestions | After |
 |:---:|:---:|:---:|
@@ -46,13 +42,13 @@ TouchUp is inspired by the [Ollama](https://ollama.com/) project and its rapidly
 
 ### 1. Install Ollama (Required)
 
-TouchUp uses Ollama as its LLM backend. This is a **hard dependency** — the app will not function without it.
+TouchUp requires Ollama to run — it won't work without it.
 
 1. Download and install Ollama from [ollama.com](https://ollama.com/).
 2. Pull a model. For best results, use a model with sufficient parameters:
 
    ```bash
-   ollama run gemma2:9b
+   ollama pull gemma2:9b
    ```
 
    Models like `gemma2:9b` and `llama3.1:8b` offer a good balance of quality and speed. Smaller models (1B–3B) run faster but may produce lower-quality results. Browse available models at [ollama.com/library](https://ollama.com/library).
@@ -64,38 +60,74 @@ TouchUp uses Ollama as its LLM backend. This is a **hard dependency** — the ap
 1. Go to the [**Releases**](../../releases) page.
 2. Download the latest `.zip` asset (kept in sync with the `main` branch).
 3. Unzip and move `TouchUp.app` to your Applications folder.
-4. On first launch, **grant Accessibility permissions** when prompted — this is required for TouchUp to read and replace selected text.
-5. If macOS blocks the app (unidentified developer), right-click the app and choose **Open**, or run:
+4. **Bypass macOS Gatekeeper** (if blocked). If the app is blocked with the message "Apple could not verify 'TouchUp' is free of malware...", run this command in your terminal:
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/TouchUp.app
    ```
+
+5. **Grant Accessibility permissions** — Navigate to **System Settings → Privacy & Security → Accessibility** and add TouchUp. This is required for the app to detect your hotkey and replace selected text.
+
+   <img src="accessibility.png" width="250" alt="Accessibility Permissions" />
 
 #### Option B: Build from Source
 
 1. Clone this repository.
 2. Open `TouchUp.xcodeproj` in Xcode.
 3. Build and run (`⌘R`).
-4. Grant Accessibility permissions when prompted.
+4. Grant Accessibility permissions — same as step 5 above.
 
-## Permissions
 
-TouchUp requires **Accessibility access** to read selected text and replace it with the refined version. macOS will prompt you to grant this on first use. You can manage it anytime in:
 
-**System Settings → Privacy & Security → Accessibility**
+## Usage
+
+TouchUp operates quietly in the background as a menu bar app. It doesn't have a main window—instead, it's always ready whenever you're typing.
+
+1. **Select your text** in any application (Notes, Mail, Slack, Chrome, etc.).
+2. **Press the hotkey** (`⌘ ⌥ T` by default) to send the text to your local LLM.
+3. **Review the suggested changes** in the popup window.
+4. **Accept** to instantly replace your original text, or **Reject** to dismiss the suggestion.
+
+You can click the TouchUp icon in your menu bar at any time to access settings or change your hotkey.
+
+<img src="touchup-menubar.png" width="250" alt="TouchUp Menu Bar" />
+
+## Settings
+
+You can customize TouchUp to fit your workflow by clicking the menu bar icon and opening **Settings**.
+
+### 1. Ollama Settings
+- **Ollama Model**: Select which local model to use for inference. TouchUp automatically detects models installed via Ollama. Click the refresh button if you recently pulled a new model.
+- **Ollama Server Address**: Change the address if your Ollama instance is running on a different port or a remote machine (default: `http://127.0.0.1:11434`).
+
+### 2. Hotkey
+- Set your preferred keyboard shortcut to trigger TouchUp (default: `⌘ ⌥ T`). Click the button and press your desired combination to change it.
+
+### 3. Prompt Strategy
+- **Default Prompt**: Focuses strictly on fixing grammar, clarity, and typos while preserving your original tone.
+- **Custom Prompt**: Write your own system prompt to change how TouchUp behaves. You can use this for translation, summarizing, converting to bullet points, or adopting a specific persona.
+
+### 4. Advanced Ollama Settings
+- **Keep Alive**: How long the model stays loaded in memory after a request. Increasing this reduces latency for subsequent uses.
+- **Context Length**: Maximum number of tokens (prompt + response) allowed per request. Choose between 2048, 4096, or 8192.
+- **Dynamic Token Prediction**: Dynamically adjusts the output token limit based on your input to improve execution speed and reduce latency.
 
 ## Latency
 
-Tested on **Apple M3 Max** with `gemma2:9b` — input: **284 characters**.
+Since inference runs locally, latency depends on your hardware and model size. Here are rough benchmarks on an **Apple M3 Max (64 GB)** with `gemma2:9b` — input: **284 characters**.
 
 | Scenario | Ollama Latency |
 |---|---|
-| Cold start (model not loaded) | 2782ms |
-| Warm (model already loaded) | 1580ms |
+| First request (model loading into memory) | 2782ms |
+| Subsequent requests (model already in memory) | 1580ms |
 
-The warm model is **~43% faster** on Ollama inference if the model is pre-warmed.
+Keeping the model loaded in memory (see **Keep Alive** in Settings) avoids the loading overhead and cuts latency by **~43%**.
 
-For even faster response times, try a smaller model like `gemma2:2b` or `llama3.2:3b` — they handle everyday grammar and typo corrections with noticeably lower latency. On the other hand, if you're using a custom prompt for more complex text tasks (rewriting tone, restructuring paragraphs, translating), a larger model will deliver higher-quality results, though with higher latency.
+For even faster response times, try a smaller model like `gemma2:2b` or `llama3.2:3b` — they handle everyday grammar and typo corrections with noticeably lower latency. For more complex tasks (rewriting tone, translating, restructuring), a larger model will deliver higher-quality results at the cost of higher latency.
+
+## Contributing
+
+Found a bug or have a feature request? [Open an issue](../../issues). Pull requests are welcome.
 
 ## License
 
